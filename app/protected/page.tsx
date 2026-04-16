@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Hotel, Plane, Shield, Utensils, LogOut } from 'lucide-react'
+import { MapPin, Hotel, Plane, Shield, Utensils, LogOut, Map } from 'lucide-react'
 
 export default function Protected() {
   const [user, setUser] = useState<any>(null)
@@ -88,13 +88,22 @@ export default function Protected() {
               {user?.email}
             </p>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2 px-6 py-2 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-600/50 text-amber-400 font-light rounded-lg transition-all duration-300"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center gap-2 px-6 py-2 bg-amber-600 hover:bg-amber-700 text-slate-900 font-light rounded-lg transition-all duration-300"
+            >
+              <Map className="w-4 h-4" />
+              Open Map
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 px-6 py-2 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-600/50 text-amber-400 font-light rounded-lg transition-all duration-300"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
 
