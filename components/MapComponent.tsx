@@ -2,9 +2,15 @@
 
 import { useEffect, useRef } from 'react'
 
-export default function MapComponent() {
+interface MapComponentProps {
+  isSatellite?: boolean
+}
+
+export default function MapComponent({ isSatellite = true }: MapComponentProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<any>(null)
+  const satelliteLayer = useRef<any>(null)
+  const streetLayer = useRef<any>(null)
 
   useEffect(() => {
     // Dynamically import Leaflet to avoid SSR issues
@@ -18,12 +24,25 @@ export default function MapComponent() {
             scrollWheelZoom: true,
           }).setView([37.7749, -122.4194], 12)
 
-          // Add OpenStreetMap tiles
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          // Esri Satellite tiles (high-quality satellite imagery from open API)
+          satelliteLayer.current = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            {
+              attribution: 'Tiles &copy; Esri',
+              maxZoom: 18,
+              className: 'satellite-tiles',
+            }
+          )
+
+          // OpenStreetMap street layer
+          streetLayer.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19,
-            className: 'map-tiles',
-          }).addTo(map.current)
+            className: 'street-tiles',
+          })
+
+          // Add satellite as default layer
+          satelliteLayer.current.addTo(map.current)
 
           // Add a marker for current location
           L.marker([37.7749, -122.4194], {
@@ -37,39 +56,39 @@ export default function MapComponent() {
             .bindPopup('Your Location')
 
           // Custom styling for the map
-          const style = document.createElement('style')
-          style.textContent = `
-            .leaflet-container {
-              background-color: #0f172a !important;
-            }
-            .leaflet-tile {
-              filter: invert(0.9) hue-rotate(200deg) saturate(1.2);
-            }
-            .map-tiles {
-              filter: invert(0.9) hue-rotate(200deg) saturate(1.2);
-            }
-            .leaflet-control-zoom-in,
-            .leaflet-control-zoom-out,
-            .leaflet-control-attribution {
-              background-color: rgba(15, 23, 42, 0.7) !important;
-              border-color: rgba(180, 83, 9, 0.5) !important;
-              color: #fcd34d !important;
-            }
-            .leaflet-control-zoom-in:hover,
-            .leaflet-control-zoom-out:hover {
-              background-color: rgba(15, 23, 42, 0.9) !important;
-            }
-            .leaflet-popup-content-wrapper {
-              background-color: rgba(15, 23, 42, 0.95) !important;
-              border-color: rgba(180, 83, 9, 0.5) !important;
-              color: #fcd34d !important;
-            }
-            .leaflet-popup-tip {
-              background-color: rgba(15, 23, 42, 0.95) !important;
-              border-color: rgba(180, 83, 9, 0.5) !important;
-            }
-          `
-          document.head.appendChild(style)
+          if (!document.querySelector('style[data-map-style]')) {
+            const style = document.createElement('style')
+            style.setAttribute('data-map-style', 'true')
+            style.textContent = `
+              .leaflet-container {
+                background-color: #0f172a !important;
+              }
+              .street-tiles {
+                filter: invert(0.9) hue-rotate(200deg) saturate(1.2);
+              }
+              .leaflet-control-zoom-in,
+              .leaflet-control-zoom-out,
+              .leaflet-control-attribution {
+                background-color: rgba(15, 23, 42, 0.8) !important;
+                border-color: rgba(180, 83, 9, 0.5) !important;
+                color: #fcd34d !important;
+              }
+              .leaflet-control-zoom-in:hover,
+              .leaflet-control-zoom-out:hover {
+                background-color: rgba(15, 23, 42, 0.95) !important;
+              }
+              .leaflet-popup-content-wrapper {
+                background-color: rgba(15, 23, 42, 0.95) !important;
+                border-color: rgba(180, 83, 9, 0.5) !important;
+                color: #fcd34d !important;
+              }
+              .leaflet-popup-tip {
+                background-color: rgba(15, 23, 42, 0.95) !important;
+                border-color: rgba(180, 83, 9, 0.5) !important;
+              }
+            `
+            document.head.appendChild(style)
+          }
         } catch (error) {
           console.error('[v0] Failed to initialize map:', error)
         }
