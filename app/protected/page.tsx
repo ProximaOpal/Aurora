@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Hotel, Plane, Shield, Utensils, LogOut, Map } from 'lucide-react'
+import { MapPin, Hotel, Plane, Shield, Utensils, LogOut, Map, Navigation } from 'lucide-react'
 
 export default function Protected() {
   const [user, setUser] = useState<any>(null)

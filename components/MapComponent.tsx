@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useRef } from 'react'
 
 export default function MapComponent() {
@@ -5,15 +7,16 @@ export default function MapComponent() {
   const map = useRef<any>(null)
 
   useEffect(() => {
-    // Dynamic import of Leaflet
+    // Dynamically import Leaflet to avoid SSR issues
     const initMap = async () => {
-      if (typeof window !== 'undefined' && mapContainer.current) {
-        const L = require('leaflet')
-        require('leaflet/dist/leaflet.css')
+      if (typeof window !== 'undefined' && mapContainer.current && !map.current) {
+        try {
+          const L = (await import('leaflet')).default
 
-        if (!map.current) {
           // Create map centered on a default location (San Francisco)
-          map.current = L.map(mapContainer.current).setView([37.7749, -122.4194], 12)
+          map.current = L.map(mapContainer.current, {
+            scrollWheelZoom: true,
+          }).setView([37.7749, -122.4194], 12)
 
           // Add OpenStreetMap tiles
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -23,7 +26,7 @@ export default function MapComponent() {
           }).addTo(map.current)
 
           // Add a marker for current location
-          const marker = L.marker([37.7749, -122.4194], {
+          L.marker([37.7749, -122.4194], {
             icon: L.icon({
               iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4IiBmaWxsPSIjMzM5OWZmIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=',
               iconSize: [24, 24],
@@ -32,9 +35,6 @@ export default function MapComponent() {
           })
             .addTo(map.current)
             .bindPopup('Your Location')
-
-          // Add zoom and recenter controls
-          map.current.zoomControl.setPosition('bottomright')
 
           // Custom styling for the map
           const style = document.createElement('style')
@@ -70,6 +70,8 @@ export default function MapComponent() {
             }
           `
           document.head.appendChild(style)
+        } catch (error) {
+          console.error('[v0] Failed to initialize map:', error)
         }
       }
     }
@@ -78,7 +80,6 @@ export default function MapComponent() {
 
     return () => {
       if (map.current) {
-        map.current.off()
         map.current.remove()
         map.current = null
       }
