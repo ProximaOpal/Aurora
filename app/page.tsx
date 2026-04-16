@@ -1,8 +1,10 @@
 'use client';
 
 import { MapPin, Hotel, Plane, Shield, Utensils, Navigation } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
   const features = [
     {
       icon: MapPin,
@@ -62,7 +64,10 @@ export default function Home() {
           <p className="text-xl md:text-2xl text-amber-100/70 font-light max-w-2xl mx-auto mb-8">
             Geotagged intelligence for the modern traveler
           </p>
-          <button className="px-8 py-4 bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl">
+          <button 
+            onClick={() => router.push('/auth/login')}
+            className="px-8 py-4 bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
             Start Exploring
           </button>
         </div>
@@ -133,7 +138,10 @@ export default function Home() {
               <p className="text-amber-100/70 font-light text-lg mb-8 max-w-lg">
                 Experience intelligent, context-aware travel recommendations powered by real-time data
               </p>
-              <button className="px-8 py-4 bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl">
+              <button 
+                onClick={() => router.push('/auth/sign-up')}
+                className="px-8 py-4 bg-amber-600 hover:bg-amber-700 text-slate-900 font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
                 Get Premium Access
               </button>
             </div>
