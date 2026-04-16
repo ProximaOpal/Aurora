@@ -57,7 +57,7 @@ export default function Home() {
         />
         <div className="relative z-10 text-center px-4">
           <h1 className="text-6xl md:text-7xl font-light text-amber-50 mb-4 tracking-wide">
-            Travel Reimagined
+            Aurora
           </h1>
           <p className="text-xl md:text-2xl text-amber-100/70 font-light max-w-2xl mx-auto mb-8">
             Geotagged intelligence for the modern traveler
