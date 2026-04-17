@@ -235,7 +235,7 @@ export async function getNearbyAmenities(
       if (response.ok) {
         const data = await response.json()
         const type = query.split('=')[1]
-        counts[type] = data.osm3s?.timestamp_osm_base ? 0 : (data.elements?.length || 0)
+        counts[type] = data.elements?.length || 0
       }
     }
 
