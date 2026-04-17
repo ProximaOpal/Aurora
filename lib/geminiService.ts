@@ -9,6 +9,8 @@ interface TravelSummary {
   locations: {
     from: string
     to: string
+    bestTravelTime?: string
+    concerns?: string | null
   }
   distance: string
   duration: string
