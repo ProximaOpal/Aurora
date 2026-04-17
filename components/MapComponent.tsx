@@ -119,7 +119,7 @@ export default function MapComponent({
 
           // Map idle event for auto zoom
           map.current.on('moveend', () => {
-            console.log('[v0] Map idle - bounds updated')
+      
             setMapIdle(true)
             setTimeout(() => setMapIdle(false), 1000)
           })
@@ -194,7 +194,7 @@ export default function MapComponent({
       className: 'route-polyline-deep',
     }).addTo(map.current)
 
-    console.log('[v0] Route polyline rendered')
+
   }, [])
 
   const addLocationMarker = useCallback(
@@ -235,11 +235,11 @@ export default function MapComponent({
 
     const circle = L.circle([lat, lng], {
       radius: 1000,
-      color: '#3b82f6',
+      color: '#0369a1',
       weight: 2,
-      opacity: 0.3,
-      fillColor: '#3b82f6',
-      fillOpacity: 0.1,
+      opacity: 0.6,
+      fillColor: '#0369a1',
+      fillOpacity: 0.15,
       className: 'location-radius',
     }).addTo(map.current)
 
@@ -257,7 +257,7 @@ export default function MapComponent({
         })
       }
 
-      console.log('[v0] Location clicked:', lat, lng)
+
     },
     [onLocationClick]
   )
@@ -320,7 +320,7 @@ export default function MapComponent({
       })
       // Add selected layer
       layers.current[currentLayer].addTo(map.current)
-      console.log('[v0] Layer changed to:', currentLayer)
+  
     }
   }, [currentLayer])
 

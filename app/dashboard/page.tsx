@@ -22,6 +22,8 @@ export default function Dashboard() {
   const [layout, setLayout] = useState<'compact' | 'expanded'>('compact')
   const [currentLayer, setCurrentLayer] = useState('satellite')
   const [routeData, setRouteData] = useState<any>(null)
+  const [startLocation, setStartLocation] = useState<any>(null)
+  const [endLocation, setEndLocation] = useState<any>(null)
   const [clickedLocation, setClickedLocation] = useState<any>(null)
 
   const navigationFeatures = [
@@ -114,6 +116,8 @@ export default function Dashboard() {
                     distance: data.route.distance,
                     duration: data.route.duration,
                   })
+                  setStartLocation(data.startLocation)
+                  setEndLocation(data.endLocation)
                 }}
               />
             </div>
@@ -157,16 +161,8 @@ export default function Dashboard() {
                     <DynamicMapComponent 
                       currentLayer={currentLayer}
                       routeData={routeData}
-                      startLocation={routeData ? {
-                        lat: 37.7749,
-                        lng: -122.4194,
-                        name: 'Start',
-                      } : undefined}
-                      endLocation={routeData ? {
-                        lat: 34.0522,
-                        lng: -118.2437,
-                        name: 'End',
-                      } : undefined}
+                      startLocation={startLocation}
+                      endLocation={endLocation}
                       onLocationClick={setClickedLocation}
                     />
                   </div>
@@ -239,6 +235,8 @@ export default function Dashboard() {
                     distance: data.route.distance,
                     duration: data.route.duration,
                   })
+                  setStartLocation(data.startLocation)
+                  setEndLocation(data.endLocation)
                 }}
               />
             </div>
@@ -248,6 +246,8 @@ export default function Dashboard() {
               <DynamicMapComponent 
                 currentLayer={currentLayer}
                 routeData={routeData}
+                startLocation={startLocation}
+                endLocation={endLocation}
                 onLocationClick={setClickedLocation}
               />
             </div>

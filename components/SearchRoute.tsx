@@ -38,7 +38,7 @@ export default function SearchRoute({ onRouteFound, defaultFromLocation, userLoc
     setError('')
 
     try {
-      console.log('[v0] Searching route from:', fromLocation, 'to:', toLocation)
+
 
       // Get coordinates for locations
       const fromCoords = await forwardGeocode(fromLocation)
@@ -50,7 +50,7 @@ export default function SearchRoute({ onRouteFound, defaultFromLocation, userLoc
         return
       }
 
-      console.log('[v0] Geocoded locations:', fromCoords, toCoords)
+
 
       // Calculate route
       const route = await calculateRoute(fromCoords.lat, fromCoords.lng, toCoords.lat, toCoords.lng)
@@ -61,7 +61,7 @@ export default function SearchRoute({ onRouteFound, defaultFromLocation, userLoc
         return
       }
 
-      console.log('[v0] Route calculated:', route)
+
 
       // Get amenities for both locations
       const amenities = await getNearbyAmenities(toCoords.lat, toCoords.lng, 2000)
@@ -76,7 +76,7 @@ export default function SearchRoute({ onRouteFound, defaultFromLocation, userLoc
       )
 
       setTravelSummary(summary)
-      console.log('[v0] Travel summary:', summary)
+
 
       // Emit route data
       if (onRouteFound) {
