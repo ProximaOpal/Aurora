@@ -1,188 +1,269 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MapPin, Search, Navigation2 } from 'lucide-react'
-import { forwardGeocode, calculateRoute, getNearbyAmenities, getCurrentLocation } from '@/lib/locationService'
+import { Search, Loader, AlertCircle, CheckCircle, MapPin, Clock, Utensils, Hospital } from 'lucide-react'
+import { calculateRoute, getNearbyAmenities, forwardGeocode } from '@/lib/locationService'
+import { getTravelSummary } from '@/lib/geminiService'
 
-interface SearchRouteProps {
-  onRouteChange?: (startCoords: [number, number], endCoords: [number, number], summary: any) => void
+interface TravelSummary {
+  locations: { from: string; to: string }
+  distance: string
+  duration: string
+  amenities: { restaurants: number; hospitals: number; police: number; cafes: number }
+  security: { level: string; description: string }
+  highlights: string[]
+  recommendations: string[]
 }
 
-export default function SearchRoute({ onRouteChange }: SearchRouteProps) {
-  const [fromAddress, setFromAddress] = useState('')
-  const [toAddress, setToAddress] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [routeSummary, setRouteSummary] = useState<any>(null)
-  const [userLocation, setUserLocation] = useState<any>(null)
-  const [fromSuggestions, setFromSuggestions] = useState<any[]>([])
-  const [toSuggestions, setToSuggestions] = useState<any[]>([])
+interface SearchRouteProps {
+  onRouteFound?: (routeData: any) => void
+  defaultFromLocation?: string
+  userLocation?: { lat: number; lng: number }
+}
 
-  useEffect(() => {
-    const initLocation = async () => {
-      const location = await getCurrentLocation()
-      if (location) {
-        setUserLocation(location)
-        setFromAddress(location.city || 'Your Location')
-      }
-    }
-    initLocation()
-  }, [])
+export default function SearchRoute({ onRouteFound, defaultFromLocation, userLocation }: SearchRouteProps) {
+  const [fromLocation, setFromLocation] = useState(defaultFromLocation || '')
+  const [toLocation, setToLocation] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [travelSummary, setTravelSummary] = useState<TravelSummary | null>(null)
+  const [error, setError] = useState('')
 
   const handleSearch = async () => {
-    if (!fromAddress || !toAddress) return
-    setIsLoading(true)
+    if (!fromLocation || !toLocation) {
+      setError('Please enter both locations')
+      return
+    }
+
+    setLoading(true)
+    setError('')
 
     try {
-      // Geocode from and to addresses
-      const fromLocation = await forwardGeocode(fromAddress)
-      const toLocation = await forwardGeocode(toAddress)
+      console.log('[v0] Searching route from:', fromLocation, 'to:', toLocation)
 
-      if (!fromLocation || !toLocation) {
-        console.error('[v0] Geocoding failed')
-        setIsLoading(false)
+      // Get coordinates for locations
+      const fromCoords = await forwardGeocode(fromLocation)
+      const toCoords = await forwardGeocode(toLocation)
+
+      if (!fromCoords || !toCoords) {
+        setError('Could not find one or both locations')
+        setLoading(false)
         return
       }
 
-      const startCoords: [number, number] = [fromLocation.lat, fromLocation.lng]
-      const endCoords: [number, number] = [toLocation.lat, toLocation.lng]
+      console.log('[v0] Geocoded locations:', fromCoords, toCoords)
 
       // Calculate route
-      const routeData = await calculateRoute(startCoords[0], startCoords[1], endCoords[0], endCoords[1])
+      const route = await calculateRoute(fromCoords.lat, fromCoords.lng, toCoords.lat, toCoords.lng)
 
-      if (!routeData) {
-        console.error('[v0] Route calculation failed')
-        setIsLoading(false)
+      if (!route) {
+        setError('Could not calculate route')
+        setLoading(false)
         return
       }
 
-      // Get nearby amenities
-      const amenities = await getNearbyAmenities(endCoords[0], endCoords[1])
+      console.log('[v0] Route calculated:', route)
 
-      const summary = {
-        from: fromLocation.city,
-        to: toLocation.city,
-        distance: routeData.distance,
-        duration: routeData.duration,
-        amenities,
-        security: 'Good' // Placeholder
-      }
+      // Get amenities for both locations
+      const amenities = await getNearbyAmenities(toCoords.lat, toCoords.lng, 2000)
 
-      setRouteSummary(summary)
-      if (onRouteChange) {
-        onRouteChange(startCoords, endCoords, summary)
+      // Get real travel summary from Gemini
+      const summary = await getTravelSummary(
+        fromLocation,
+        toLocation,
+        route.distance,
+        route.duration,
+        amenities
+      )
+
+      setTravelSummary(summary)
+      console.log('[v0] Travel summary:', summary)
+
+      // Emit route data
+      if (onRouteFound) {
+        onRouteFound({
+          route,
+          startLocation: { lat: fromCoords.lat, lng: fromCoords.lng, name: fromLocation },
+          endLocation: { lat: toCoords.lat, lng: toCoords.lng, name: toLocation },
+        })
       }
-    } catch (error) {
-      console.error('[v0] Search error:', error)
+    } catch (err) {
+      console.error('[v0] Search error:', err)
+      setError('Error searching route. Please try again.')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   return (
     <div className="space-y-4">
       {/* Search Bar */}
-      <div 
-        className="relative overflow-hidden rounded-lg p-4 border border-amber-600/40 backdrop-blur"
-        style={{
-          backgroundImage: 'url(https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Rosegold%20Marble%20Border%20Black%20Background%20Wallpaper%20Image%20For%20Free%20Download%20-%20Pngtree-ORHb3WqZ3FIwjFF3LU2VclGh9kiHLn.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-slate-950/70" />
-        <div className="relative z-10">
-          <div className="flex flex-col md:flex-row gap-3 mb-3">
-            {/* From Input */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 bg-slate-800/60 rounded-lg px-3 py-2 border border-amber-600/30">
-                <MapPin className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                <input
-                  type="text"
-                  placeholder="From your location"
-                  value={fromAddress}
-                  onChange={(e) => setFromAddress(e.target.value)}
-                  className="flex-1 bg-transparent text-amber-50 placeholder-amber-100/50 font-light outline-none text-sm"
-                />
-              </div>
-            </div>
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="relative">
+            <label className="text-xs text-amber-100/70 font-light uppercase tracking-wider mb-1 block">
+              From
+            </label>
+            <input
+              type="text"
+              value={fromLocation}
+              onChange={(e) => setFromLocation(e.target.value)}
+              placeholder="Your Location"
+              className="w-full px-4 py-3 bg-slate-800/70 border border-amber-600/40 rounded-lg text-amber-50 placeholder-amber-100/50 focus:outline-none focus:border-amber-600/70 transition-colors"
+            />
+            <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 mt-2 w-4 h-4 text-amber-400 pointer-events-none" />
+          </div>
 
-            {/* To Input */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 bg-slate-800/60 rounded-lg px-3 py-2 border border-amber-600/30">
-                <Navigation2 className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                <input
-                  type="text"
-                  placeholder="To"
-                  value={toAddress}
-                  onChange={(e) => setToAddress(e.target.value)}
-                  className="flex-1 bg-transparent text-amber-50 placeholder-amber-100/50 font-light outline-none text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Search Button */}
-            <button
-              onClick={handleSearch}
-              disabled={isLoading}
-              className="px-6 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-600/50 text-slate-900 font-light rounded-lg transition-all duration-300 flex items-center gap-2"
-            >
-              <Search className="w-4 h-4" />
-              {isLoading ? 'Loading...' : 'Search'}
-            </button>
+          <div className="relative">
+            <label className="text-xs text-amber-100/70 font-light uppercase tracking-wider mb-1 block">
+              To
+            </label>
+            <input
+              type="text"
+              value={toLocation}
+              onChange={(e) => setToLocation(e.target.value)}
+              placeholder="Destination"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              className="w-full px-4 py-3 bg-slate-800/70 border border-amber-600/40 rounded-lg text-amber-50 placeholder-amber-100/50 focus:outline-none focus:border-amber-600/70 transition-colors"
+            />
+            <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 mt-2 w-4 h-4 text-amber-400 pointer-events-none" />
           </div>
         </div>
+
+        <button
+          onClick={handleSearch}
+          disabled={loading}
+          className="w-full md:w-auto px-6 py-3 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-600/50 text-slate-900 font-light rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <>
+              <Loader className="w-4 h-4 animate-spin" />
+              Searching...
+            </>
+          ) : (
+            <>
+              <Search className="w-4 h-4" />
+              Search Route
+            </>
+          )}
+        </button>
+
+        {error && (
+          <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-300 font-light">{error}</p>
+          </div>
+        )}
       </div>
 
-      {/* Route Summary Card */}
-      {routeSummary && (
-        <div 
-          className="relative overflow-hidden rounded-lg p-5 border border-amber-600/40"
+      {/* Travel Summary Card */}
+      {travelSummary && (
+        <div
+          className="border border-amber-600/40 rounded-lg p-6 space-y-4"
           style={{
             backgroundImage: 'url(https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Islamic%20Background%20Green%20Mandala%20Patern%20Wallpaper%20Image%20For%20Free%20Download%20-%20Pngtree-XZXrtT4YGmZjUoAr8qzVkzxGL24T3E.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         >
-          <div className="absolute inset-0 bg-slate-950/70" />
-          <div className="relative z-10 space-y-3">
-            <h3 className="text-amber-50 font-light text-lg">Travel Summary</h3>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="absolute inset-0 bg-slate-950/70 rounded-lg" />
+
+          <div className="relative z-10">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-amber-100/70 text-xs font-light uppercase">From</p>
-                <p className="text-amber-50 font-light">{routeSummary.from}</p>
+                <h3 className="text-lg font-light text-amber-50 mb-1">Travel Summary</h3>
+                <p className="text-sm text-amber-100/70 font-light">
+                  {travelSummary.locations.from} → {travelSummary.locations.to}
+                </p>
               </div>
-              <div>
-                <p className="text-amber-100/70 text-xs font-light uppercase">To</p>
-                <p className="text-amber-50 font-light">{routeSummary.to}</p>
+              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+            </div>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-slate-900/50 border border-amber-600/30 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <MapPin className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs text-amber-100/70 font-light">Distance</span>
+                </div>
+                <p className="text-lg font-light text-amber-50">{travelSummary.distance} km</p>
               </div>
-              <div>
-                <p className="text-amber-100/70 text-xs font-light uppercase">Distance</p>
-                <p className="text-amber-50 font-light">{routeSummary.distance} km</p>
-              </div>
-              <div>
-                <p className="text-amber-100/70 text-xs font-light uppercase">Duration</p>
-                <p className="text-amber-50 font-light">{routeSummary.duration} min</p>
+
+              <div className="bg-slate-900/50 border border-amber-600/30 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs text-amber-100/70 font-light">Duration</span>
+                </div>
+                <p className="text-lg font-light text-amber-50">{travelSummary.duration} min</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-amber-600/30">
-              <div>
-                <p className="text-amber-100/70 text-xs font-light uppercase">Restaurants</p>
-                <p className="text-amber-50 font-light">{routeSummary.amenities.restaurants}</p>
+            {/* Amenities */}
+            <div className="bg-slate-900/50 border border-amber-600/30 rounded-lg p-3 mb-4">
+              <h4 className="text-sm font-light text-amber-50 mb-2">Nearby Amenities</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2 text-amber-100/70 font-light">
+                  <Utensils className="w-4 h-4 text-amber-400" />
+                  {travelSummary.amenities.restaurants} Restaurants
+                </div>
+                <div className="flex items-center gap-2 text-amber-100/70 font-light">
+                  <Hospital className="w-4 h-4 text-amber-400" />
+                  {travelSummary.amenities.hospitals} Hospitals
+                </div>
               </div>
-              <div>
-                <p className="text-amber-100/70 text-xs font-light uppercase">Hotels</p>
-                <p className="text-amber-50 font-light">{routeSummary.amenities.hospitals || 0}</p>
+            </div>
+
+            {/* Security Info */}
+            <div className={`bg-slate-900/50 border rounded-lg p-3 mb-4 ${
+              travelSummary.security.level === 'Safe'
+                ? 'border-green-500/30'
+                : travelSummary.security.level === 'Moderate'
+                ? 'border-yellow-500/30'
+                : 'border-red-500/30'
+            }`}>
+              <div className="flex items-center gap-2 mb-1">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    travelSummary.security.level === 'Safe'
+                      ? 'bg-green-400'
+                      : travelSummary.security.level === 'Moderate'
+                      ? 'bg-yellow-400'
+                      : 'bg-red-400'
+                  }`}
+                />
+                <h4 className="text-sm font-light text-amber-50">
+                  Security: <span className="text-amber-400">{travelSummary.security.level}</span>
+                </h4>
               </div>
-              <div>
-                <p className="text-amber-100/70 text-xs font-light uppercase">Cafes</p>
-                <p className="text-amber-50 font-light">{routeSummary.amenities.cafes}</p>
-              </div>
-              <div>
-                <p className="text-amber-100/70 text-xs font-light uppercase">Security</p>
-                <p className="text-green-400 font-light">{routeSummary.security}</p>
-              </div>
+              <p className="text-xs text-amber-100/70 font-light leading-relaxed">
+                {travelSummary.security.description}
+              </p>
+            </div>
+
+            {/* Highlights */}
+            <div className="mb-4">
+              <h4 className="text-sm font-light text-amber-50 mb-2">Highlights</h4>
+              <ul className="space-y-1">
+                {travelSummary.highlights.map((highlight, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-amber-100/70 font-light">
+                    <span className="text-amber-400 mt-1">•</span>
+                    <span>{highlight}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Recommendations */}
+            <div>
+              <h4 className="text-sm font-light text-amber-50 mb-2">Recommendations</h4>
+              <ul className="space-y-1">
+                {travelSummary.recommendations.map((rec, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-amber-100/70 font-light">
+                    <span className="text-amber-400 mt-1">→</span>
+                    <span>{rec}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
