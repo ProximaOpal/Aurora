@@ -44,7 +44,8 @@ export async function getTravelSummary(
     }
 
     const avgSpeed = (parseFloat(distance) / (parseInt(String(duration)) / 60)).toFixed(1)
-
+    bestTravelTime: analysisData.bestTravelTime || 'Travel during daylight hours'
+    concerns: analysisData.concerns || null,
     const prompt = `You are a professional travel safety and logistics analyst for East Africa. Provide a comprehensive travel analysis for the route below. Use ONLY the provided data — no assumptions.
 
 ROUTE DETAILS:
