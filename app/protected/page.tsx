@@ -144,9 +144,16 @@ export default function Protected() {
                   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%D8%A5%D8%B7%D8%A7%D8%B1-ZDZFxjFKW3I5pcxBjMVbsSqUmEjk2p.jpg',
                   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/download%20%285%29-vfKxarfoaPCPV3H1Th3bXOvZXvVJmx.jpg',
                 ]
+                const handleClick = () => {
+                  if (index === 0) {
+                    // Smart Locations - navigate to map
+                    router.push('/dashboard')
+                  }
+                }
                 return (
                   <div
                     key={index}
+                    onClick={handleClick}
                     className="group relative overflow-hidden rounded-xl cursor-pointer transition-transform duration-300 hover:scale-105 h-64"
                     style={{
                       backgroundImage: `url(${images[index % images.length]})`,

@@ -157,3 +157,146 @@ export async function getCurrentLocation(): Promise<LocationData | null> {
     )
   })
 }
+
+/**
+ * Calculate route using OSRM (Open Source Routing Machine)
+ * Returns coordinates for the route and distance/duration
+ */
+export async function calculateRoute(
+  startLat: number,
+  startLng: number,
+  endLat: number,
+  endLng: number
+): Promise<any> {
+  try {
+    const response = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`,
+      {
+        headers: { 'Accept': 'application/json' },
+      }
+    )
+
+    if (!response.ok) {
+      console.error('[v0] Route calculation failed:', response.statusText)
+      return null
+    }
+
+    const data = await response.json()
+    if (!data.routes || data.routes.length === 0) {
+      console.error('[v0] No route found')
+      return null
+    }
+
+    const route = data.routes[0]
+    return {
+      coordinates: route.geometry.coordinates,
+      distance: (route.distance / 1000).toFixed(2), // km
+      duration: Math.round(route.duration / 60), // minutes
+      bounds: calculateBounds(route.geometry.coordinates),
+    }
+  } catch (error) {
+    console.error('[v0] Route calculation error:', error)
+    return null
+  }
+}
+
+/**
+ * Calculate bounds from coordinates
+ */
+function calculateBounds(coordinates: [number, number][]): any {
+  const lats = coordinates.map(coord => coord[1])
+  const lngs = coordinates.map(coord => coord[0])
+  return {
+    minLat: Math.min(...lats),
+    maxLat: Math.max(...lats),
+    minLng: Math.min(...lngs),
+    maxLng: Math.max(...lngs),
+  }
+}
+
+/**
+ * Get nearby amenities and safety information
+ */
+export async function getNearbyAmenities(
+  lat: number,
+  lng: number,
+  radius: number = 1500
+): Promise<{ restaurants: number; hospitals: number; police: number; cafes: number }> {
+  try {
+    const amenityTypes = ['amenity=restaurant', 'amenity=hospital', 'amenity=police', 'amenity=cafe']
+    const counts: any = { restaurants: 0, hospitals: 0, police: 0, cafes: 0 }
+
+    for (const query of amenityTypes) {
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: `[out:json];node[${query}](around:${radius},${lat},${lng});out count;`,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const type = query.split('=')[1]
+        counts[type] = data.osm3s?.timestamp_osm_base ? 0 : (data.elements?.length || 0)
+      }
+    }
+
+    return counts
+  } catch (error) {
+    console.error('[v0] Amenities fetch error:', error)
+    return { restaurants: 0, hospitals: 0, police: 0, cafes: 0 }
+  }
+}
+
+/**
+ * Map layer configurations for different views
+ */
+export const mapLayers = [
+  {
+    id: 'satellite',
+    name: 'Satellite',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri',
+    maxZoom: 18,
+  },
+  {
+    id: 'street',
+    name: 'Street Map',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  },
+  {
+    id: 'dark',
+    name: 'Dark',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; CartoDB',
+    maxZoom: 19,
+  },
+  {
+    id: 'terrain',
+    name: 'Terrain',
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenTopoMap',
+    maxZoom: 17,
+  },
+  {
+    id: 'cycle',
+    name: 'Cycle',
+    url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+    attribution: '&copy; CyclOSM',
+    maxZoom: 20,
+  },
+  {
+    id: 'hiking',
+    name: 'Hiking',
+    url: 'https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png',
+    attribution: '&copy; Waymarked Trails',
+    maxZoom: 18,
+  },
+  {
+    id: 'transport',
+    name: 'Transport',
+    url: 'https://{s}.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenCycleMap',
+    maxZoom: 18,
+  },
+]
