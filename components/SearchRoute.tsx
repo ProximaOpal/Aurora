@@ -74,7 +74,33 @@ export default function SearchRoute({ onRouteFound, defaultFromLocation, userLoc
         route.duration,
         amenities
       )
-
+      // Save route to Supabase
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('recent_routes').insert({
+            user_id: user.id,
+            from_name: fromLocation,
+            to_name: toLocation,
+            from_lat: fromCoords.lat,
+            from_lng: fromCoords.lng,
+            to_lat: toCoords.lat,
+            to_lng: toCoords.lng,
+            distance_km: parseFloat(route.distance),
+            duration_min: route.duration,
+            security_level: summary.security.level,
+          })
+          // Update total stats
+          await supabase.rpc('increment_route_stats', {
+            uid: user.id,
+            dist: parseFloat(route.distance)
+          })
+        }
+      } catch (e) {
+        // Non-blocking — don't show error to user
+      }
       setTravelSummary(summary)
 
 
@@ -214,22 +240,20 @@ export default function SearchRoute({ onRouteFound, defaultFromLocation, userLoc
             </div>
 
             {/* Security Info */}
-            <div className={`bg-slate-900/50 border rounded-lg p-3 mb-4 ${
-              travelSummary.security.level === 'Safe'
+            <div className={`bg-slate-900/50 border rounded-lg p-3 mb-4 ${travelSummary.security.level === 'Safe'
                 ? 'border-green-500/30'
                 : travelSummary.security.level === 'Moderate'
-                ? 'border-yellow-500/30'
-                : 'border-red-500/30'
-            }`}>
+                  ? 'border-yellow-500/30'
+                  : 'border-red-500/30'
+              }`}>
               <div className="flex items-center gap-2 mb-1">
                 <div
-                  className={`w-2 h-2 rounded-full ${
-                    travelSummary.security.level === 'Safe'
+                  className={`w-2 h-2 rounded-full ${travelSummary.security.level === 'Safe'
                       ? 'bg-green-400'
                       : travelSummary.security.level === 'Moderate'
-                      ? 'bg-yellow-400'
-                      : 'bg-red-400'
-                  }`}
+                        ? 'bg-yellow-400'
+                        : 'bg-red-400'
+                    }`}
                 />
                 <h4 className="text-sm font-light text-amber-50">
                   Security: <span className="text-amber-400">{travelSummary.security.level}</span>
