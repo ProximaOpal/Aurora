@@ -41,39 +41,43 @@ export async function getTravelSummary(
       return getDefaultTravelSummary(fromLocation, toLocation, distance, duration, amenities)
     }
 
-    const prompt = `You are a professional travel safety and logistics analyst. Provide a comprehensive travel analysis for the following route. Use ONLY the provided data - no assumptions or external data.
+    const avgSpeed = (parseFloat(distance) / (parseInt(String(duration)) / 60)).toFixed(1)
+
+    const prompt = `You are a professional travel safety and logistics analyst for East Africa. Provide a comprehensive travel analysis for the route below. Use ONLY the provided data — no assumptions.
 
 ROUTE DETAILS:
 - Origin: ${fromLocation}
 - Destination: ${toLocation}
-- Distance: ${distance} kilometers
+- Total Distance: ${distance} kilometers
 - Estimated Duration: ${duration} minutes
-- Average Speed: ${(parseFloat(distance) / (parseInt(duration) / 60)).toFixed(1)} km/h
+- Average Speed: ${avgSpeed} km/h
+- Travel Mode: Road (driving)
 
-AVAILABLE INFRASTRUCTURE & AMENITIES:
-- Restaurants: ${amenities.restaurants} establishments within 1.5km radius
-- Hospitals/Medical Facilities: ${amenities.hospitals} facilities
-- Police Stations/Security Posts: ${amenities.police} stations
-- Cafes/Rest Stops: ${amenities.cafes} locations
+INFRASTRUCTURE & AMENITIES WITHIN 2KM OF DESTINATION:
+- Restaurants / Eateries: ${amenities.restaurants} establishments
+- Hospitals / Medical Facilities: ${amenities.hospitals} facilities
+- Police Stations / Security Posts: ${amenities.police} stations
+- Cafes / Rest Stops: ${amenities.cafes} locations
 
-ANALYSIS REQUIRED:
-Based ONLY on the above data, provide:
-1. Security level assessment (Safe/Moderate/Caution)
-2. Specific security description using actual amenity counts
-3. Route highlights based on actual infrastructure
-4. Practical recommendations for this specific journey
+ANALYSIS TASKS (based ONLY on the data above):
+1. Security level: Safe if police ≥ 2 and hospitals ≥ 1, Moderate if police = 1 or hospitals = 0, Caution if both police = 0 and hospitals = 0.
+2. Write a 2-3 sentence security description referencing the ACTUAL amenity counts.
+3. List 3 route highlights derived from the infrastructure data (mention distances, amenity counts, travel time).
+4. List 4 practical recommendations for this specific journey (mention actual counts and locations where possible).
+5. Suggest the best time of day to travel based on the route distance (${distance} km) and duration (${duration} min).
+6. Note any concerns given the infrastructure data.
 
-Respond as VALID JSON ONLY (no markdown formatting):
+Respond as VALID JSON ONLY (no markdown, no backticks, no extra text):
 {
   "security": {
     "level": "Safe|Moderate|Caution",
-    "description": "Specific 2-3 sentence assessment mentioning the actual amenity counts provided"
+    "description": "2-3 sentence assessment mentioning actual amenity counts"
   },
-  "highlights": ["Highlight 1 based on actual data", "Highlight 2 based on actual data", "Highlight 3 based on actual data"],
-  "recommendations": ["Recommendation 1 for this specific journey", "Recommendation 2", "Recommendation 3"]
-}
-
-CRITICAL: Use only the data provided. Reference actual numbers and locations mentioned above.`
+  "highlights": ["Highlight 1 with actual data", "Highlight 2 with actual data", "Highlight 3 with actual data"],
+  "recommendations": ["Rec 1", "Rec 2", "Rec 3", "Rec 4"],
+  "bestTravelTime": "e.g. Early morning 6-8am for a ${distance}km journey",
+  "concerns": "One sentence about any gaps in infrastructure, or null if none"
+}`
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
