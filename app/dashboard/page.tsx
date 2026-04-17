@@ -255,18 +255,18 @@ export default function Dashboard() {
             {/* Layer Switcher & Features Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Layer Switcher */}
-              <div className="lg:col-span-1">
-                <div className="bg-slate-900/40 border border-amber-600/30 rounded-lg p-4 space-y-2">
+              <div className="lg:col-span-1 relative z-20">
+                <div className="bg-slate-900/60 border border-amber-600/30 rounded-lg p-4 space-y-2 backdrop-blur">
                   <h3 className="text-amber-50 font-light text-sm uppercase tracking-widest">Map Layers</h3>
                   <div className="space-y-2">
                     {mapLayers.map((layer) => (
                       <button
                         key={layer.id}
                         onClick={() => setCurrentLayer(layer.id)}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-light transition-all duration-300 border ${
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-light transition-all duration-300 border relative z-30 ${
                           currentLayer === layer.id
                             ? 'bg-amber-600 text-slate-900 border-amber-600'
-                            : 'bg-slate-800/40 text-amber-100 border-amber-600/40 hover:border-amber-600/70'
+                            : 'bg-slate-800/60 text-amber-100 border-amber-600/40 hover:border-amber-600/70 hover:bg-slate-800/80'
                         }`}
                       >
                         {layer.name}
@@ -277,14 +277,14 @@ export default function Dashboard() {
               </div>
 
               {/* Features Grid */}
-              <div className="lg:col-span-3">
+              <div className="lg:col-span-3 relative z-20">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {navigationFeatures.map((feature) => {
                     const Icon = feature.icon
                     return (
                       <button
                         key={feature.label}
-                        className="group relative overflow-hidden rounded-lg p-4 transition-all duration-300 border border-amber-600/40 hover:border-amber-600/80 hover:shadow-lg"
+                        className="group relative overflow-hidden rounded-lg p-4 transition-all duration-300 border border-amber-600/40 hover:border-amber-600/80 hover:shadow-lg z-30"
                         style={{
                           backgroundImage: 'url(https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Rosegold%20Marble%20Border%20Black%20Background%20Wallpaper%20Image%20For%20Free%20Download%20-%20Pngtree-ORHb3WqZ3FIwjFF3LU2VclGh9kiHLn.jpg)',
                           backgroundSize: 'cover',

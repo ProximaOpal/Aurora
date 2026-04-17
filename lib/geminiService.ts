@@ -41,43 +41,60 @@ export async function getTravelSummary(
       return getDefaultTravelSummary(fromLocation, toLocation, distance, duration, amenities)
     }
 
-    const prompt = `Analyze this travel route and provide a detailed travel summary in JSON format:
-    
-From: ${fromLocation}
-To: ${toLocation}
-Distance: ${distance} km
-Duration: ${duration} minutes
-Nearby Amenities - Restaurants: ${amenities.restaurants}, Hospitals: ${amenities.hospitals}, Police Stations: ${amenities.police}, Cafes: ${amenities.cafes}
+    const prompt = `You are a professional travel safety and logistics analyst. Provide a comprehensive travel analysis for the following route. Use ONLY the provided data - no assumptions or external data.
 
-Provide response as valid JSON (no markdown) with this structure:
+ROUTE DETAILS:
+- Origin: ${fromLocation}
+- Destination: ${toLocation}
+- Distance: ${distance} kilometers
+- Estimated Duration: ${duration} minutes
+- Average Speed: ${(parseFloat(distance) / (parseInt(duration) / 60)).toFixed(1)} km/h
+
+AVAILABLE INFRASTRUCTURE & AMENITIES:
+- Restaurants: ${amenities.restaurants} establishments within 1.5km radius
+- Hospitals/Medical Facilities: ${amenities.hospitals} facilities
+- Police Stations/Security Posts: ${amenities.police} stations
+- Cafes/Rest Stops: ${amenities.cafes} locations
+
+ANALYSIS REQUIRED:
+Based ONLY on the above data, provide:
+1. Security level assessment (Safe/Moderate/Caution)
+2. Specific security description using actual amenity counts
+3. Route highlights based on actual infrastructure
+4. Practical recommendations for this specific journey
+
+Respond as VALID JSON ONLY (no markdown formatting):
 {
   "security": {
     "level": "Safe|Moderate|Caution",
-    "description": "2-3 sentence security assessment"
+    "description": "Specific 2-3 sentence assessment mentioning the actual amenity counts provided"
   },
-  "highlights": ["3-4 key highlights about this route"],
-  "recommendations": ["3-4 practical travel recommendations"]
+  "highlights": ["Highlight 1 based on actual data", "Highlight 2 based on actual data", "Highlight 3 based on actual data"],
+  "recommendations": ["Recommendation 1 for this specific journey", "Recommendation 2", "Recommendation 3"]
 }
 
-Keep responses concise and practical.`
+CRITICAL: Use only the data provided. Reference actual numbers and locations mentioned above.`
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
-          },
-        ],
-      }),
-    })
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }),
+      }
+    )
 
     if (!response.ok) {
       console.error('[v0] Gemini API error:', response.statusText)

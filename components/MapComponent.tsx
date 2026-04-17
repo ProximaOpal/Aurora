@@ -184,13 +184,14 @@ export default function MapComponent({
     // Convert coordinates [lng, lat] to [lat, lng]
     const latLngs = route.coordinates.map((coord) => [coord[1], coord[0]])
 
-    // Add polyline
+    // Add polyline with deep blue color
     routePolyline.current = L.polyline(latLngs, {
-      color: '#3b82f6',
-      weight: 4,
-      opacity: 0.8,
-      dashArray: '10, 5',
-      className: 'route-polyline',
+      color: '#0369a1',
+      weight: 5,
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round',
+      className: 'route-polyline-deep',
     }).addTo(map.current)
 
     console.log('[v0] Route polyline rendered')
@@ -270,8 +271,8 @@ export default function MapComponent({
           background-color: #0f172a !important;
           border-radius: 0.5rem;
         }
-        .route-polyline {
-          filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.5));
+        .route-polyline-deep {
+          filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.8)) drop-shadow(0 0 6px rgba(3, 105, 161, 0.6));
         }
         .location-radius {
           transition: all 0.3s ease;
