@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Hotel, Plane, Shield, Utensils, LogOut, Map, Navigation, User } from 'lucide-react'
+import { MapPin, Hotel, Plane, Shield, Utensils, LogOut, Map, Navigation } from 'lucide-react'
 
 export default function Protected() {
   const [user, setUser] = useState<any>(null)
@@ -89,13 +89,6 @@ export default function Protected() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/profile')}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-600/50 text-amber-400 font-light rounded-lg transition-all duration-300"
-            >
-              <User className="w-4 h-4" />
-              Profile
-            </button>
             <button
               onClick={() => router.push('/dashboard')}
               className="flex items-center gap-2 px-6 py-2 bg-amber-600 hover:bg-amber-700 text-slate-900 font-light rounded-lg transition-all duration-300"
